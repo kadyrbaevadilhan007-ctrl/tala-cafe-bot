@@ -1,35 +1,44 @@
 import telebot
-from telebot import types
 from flask import Flask
 from threading import Thread
+import os
 
-# Блок для работы 24/7
+# 1. ВСТАВЬ СВОЙ ТОКЕН НИЖЕ
+TOKEN = "8659728408:AAHinMNx_Kaep7wfOLNZVTQmWDmLIhmD9cs"
+bot = telebot.TeleBot(TOKEN)
+
+# 2. НАСТРОЙКА ВЕБ-СЕРВЕРА (для Render 24/7)
 app = Flask('')
+
 @app.route('/')
-def home(): return "Бот работает!"
-def run(): app.run(host='0.0.0.0', port=8080)
+def home():
+    return "Бот кафе в Таласе работает 24/7!"
+
+def run():
+    # Render сам назначит порт, берем его из настроек системы
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
+
 def keep_alive():
     t = Thread(target=run)
     t.start()
 
-# --- ВСТАВЬ СВОИ ДАННЫЕ ТУТ ---
-TOKEN = '8659728408:AAHinMNx_Kaep7wfOLNZVTQmWDmLIhmD9cs'
-bot = telebot.TeleBot(TOKEN)
+# --- ТВОИ КОМАНДЫ БОТА (ПРИМЕР) ---
+# Сюда вставь все свои @bot.message_handler, которые у тебя были
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add("☕ Меню", "🍕 Заказать")
-    bot.send_message(message.chat.id, "Привет! Это бот Кафе.", reply_markup=markup)
+    bot.reply_to(message, "Салам! Бот кафе в Таласе запущен и готов принимать заказы!")
 
-@bot.message_handler(content_types=['text'])
-def handle_text(message):
-    if message.text == "☕ Меню":
-        bot.send_message(message.chat.id, "Кофе: 120 сом\nЧай: 80 сом")
-    elif message.text == "🍕 Заказать":
-        bot.send_message(message.chat.id, "Напишите ваш заказ!")
+# --- ЗАПУСК ---
 
 if __name__ == "__main__":
+    # Сначала запускаем веб-сервер в отдельном потоке
     keep_alive()
-    print("Бот запущен!")
-    bot.polling(none_stop=True)
+    print("Веб-сервер запущен, бот начинает работу...")
+    
+    # Затем запускаем самого бота
+    try:
+        bot.polling(none_stop=True)
+    except Exception as e:
+        print(f"Ошибка бота: {e}")
